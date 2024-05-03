@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flower Shop</title>
+</head>
+<body>
+    <header>
+        <h1>Flower Shop</h1>
+        <nav class="topnav">
+            <a href="index.html">Home</a>
+            <!-- Additional navigation items can be added here -->
+            <ul>
+                <li class="right"><a href="login.html">Login</a></li> <!-- Updated via JavaScript -->
+                <li class="right"><a href="signup.html">Signup</a></li> <!-- Updated via JavaScript -->
+            </ul>
+        </nav>
+        <div id="basket">
+            Basket Items: <span id="basketCount">0</span>
+        </div>
+    </header>
+
+    <section>
+        <h2>Filters</h2>
+        <label for="flowerType">Flower Type:</label>
+        <select id="flowerType">
+            <option value="">All</option>
+            <option value="mixed">Mixed</option>
+            <option value="roses">Roses</option>
+            <option value="tulips">Valencia</option>
+            <option value="daisies">Daisies</option>
+        </select>
+
+        <label for="occasion">Occasion:</label>
+        <select id="occasion">
+            <option value="">All</option>
+            <option value="mother's day">Mother's Day</option>
+            <option value="birthday">Birthday</option>
+            <option value="thank you">Thank You</option>
+        </select>
+
+        <label for="color">Color:</label>
+        <select id="color">
+            <option value="">All</option>
+            <option value="red">Red</option>
+            <option value="yellow">Yellow</option>
+            <option value="green">Green</option>
+            <option value="orange">Orange</option>
+        </select>
+
+        <label for="sort">Sort By:</label>
+        <select id="sort">
+            <option value="priceLowHigh">Price: Low to High</option>
+            <option value="priceHighLow">Price: High to Low</option>
+        </select>
+
+        <button onclick="applyFilters()">Apply Filters</button>
+    </section>
+
+    <section id="flowerList">
+        <h2>Flowers</h2>
+        <!-- Flowers will be loaded here dynamically -->
+    </section>
+
+    <script src="configuration.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>

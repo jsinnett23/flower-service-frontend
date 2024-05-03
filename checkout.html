@@ -1,0 +1,58 @@
+<!-- Checkout Page Updated HTML -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Checkout</h1>
+        <nav class="topnav">
+            <a href="index.html">Home</a>
+            <!-- Dynamic login/logout -->
+        </nav>
+    </header>
+
+    <main>
+        <h2>Order Summary</h2>
+        <div id="orderDetails"></div>
+        <div>
+           
+        </div>
+        <button onclick="placeOrder()">Place Order</button>
+    </main>
+
+    <script src="configuration.js"></script>
+    <script src="main.js"></script>
+    <script>
+                document.addEventListener('DOMContentLoaded', function() {
+            const basket = JSON.parse(localStorage.getItem('basket'));
+            if (basket) {
+                document.getElementById('orderDetails').innerHTML = `
+                    <img src="${configuration.host()}/flowers/${basket.flowerId}/image" alt="Flower Image" style="width:200px; height:200px;">
+                    <p>Flower Name: ${basket.flowerName}</p>
+                    <p>Type: ${basket.flowerType}</p>
+                    <p>Color: ${basket.flowerColor}</p>
+                    <p>Recipient Name: ${basket.recipientName}</p>
+                    <p>Delivery Date: ${basket.deliveryDate}</p>
+                `;
+
+                // Check if logged in for a discount
+                if (configuration.isLoggedIn()) {
+                    document.getElementById('orderDetails').innerHTML += `<p>Discount Applied: -$10</p>`;
+                }
+            } else {
+                console.log('No basket item found');
+                window.location.href = 'index.html'; // Redirect if basket is empty
+            }
+        });
+
+        </script>
+        
+        
+        
+</body>
+</html>
