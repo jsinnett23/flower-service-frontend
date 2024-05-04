@@ -2,6 +2,15 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log("DOM fully loaded and parsed");
     updateBasketCount();
     updateTheNavigationBar();
+    let basket = localStorage.getItem('basket');
+    console.log("Initial basket content:", basket);
+
+    basket = basket ? JSON.parse(basket) : {};
+    console.log("Parsed basket content:", basket);
+
+    if (!basket || !basket.flowerId || typeof basket.price === 'undefined') {
+        console.error('No items in the basket or basket data is incomplete');
+    } else {}
     const flowerId = new URLSearchParams(window.location.search).get('id');
     if (flowerId) {
         console.log("Flower ID present: ", flowerId);
@@ -45,32 +54,35 @@ function displayFlowers(flowers) {
 
     flowers.forEach(flower => {
         const flowerDiv = document.createElement('div');
-        flowerDiv.className = "flower";
         flowerDiv.innerHTML = `
             <h3>${flower.name}</h3>
             <img id="img-${flower.id}" alt="Image of ${flower.name}" style="width:100px; height:100px;">
             <p>Type: ${flower.type}</p>
-            <p>Color: ${flower.color}</p>
-            <button onclick='storeFlowerData(${JSON.stringify(flower)})'>Add to Basket</button>
+            <p>Price: $${flower.price || 'N/A'}</p>
+            <button onclick="window.location.href='add-to-basket.html?id=${flower.id}'">Add to Basket</button>
         `;
         flowerList.appendChild(flowerDiv);
-
-        // Ensure the image is loaded correctly
         loadImage(flower.id);
     });
 }
 
+
+
 function loadImage(flowerId) {
     const imgElement = document.getElementById(`img-${flowerId}`);
     const imageUrl = `${configuration.host()}/flowers/${flowerId}/image`;
+
+    console.log(`Attempting to load image from: ${imageUrl}`);
+
     fetch(imageUrl, {
         method: 'GET',
         headers: {
             'Authorization': `Bearer ${configuration.token()}`,
-            'Accept': 'image/jpeg'
+            'Accept': 'image/jpeg' // Ensure correct Accept header
         }
     })
     .then(response => {
+        console.log(`Response status for image ${flowerId}: ${response.status}`);
         if (response.ok) {
             return response.blob();
         } else {
@@ -84,11 +96,6 @@ function loadImage(flowerId) {
         console.error(`Error loading image ${flowerId}:`, error);
         imgElement.alt = 'Failed to load image';
     });
-}
-
-function storeFlowerData(flower) {
-    localStorage.setItem('selectedFlower', JSON.stringify(flower));
-    window.location.href = 'add-to-basket.html'; // Redirect to add-to-basket page
 }
 
 
@@ -207,7 +214,6 @@ function loadOrderSummary() {
 }
 
 function placeOrder() {
-    // Log the basket content
     const basket = JSON.parse(localStorage.getItem('basket') || '{}');
     console.log('Basket Content:', basket);
 
@@ -218,27 +224,29 @@ function placeOrder() {
         return;
     }
 
-    // Attempt to retrieve the recipient name and log it
+    // Validate the recipient name element is present and has a value
     const recipientNameElement = document.getElementById('recipientName');
-    console.log('Recipient Name Element:', recipientNameElement);
-    // Validate recipientNameElement before proceeding
     if (!recipientNameElement) {
         console.error('Recipient name input element not found');
         alert('Recipient name input element not found');
         return;
     }
+
     const recipientName = recipientNameElement.value;
     if (!recipientName) {
         alert('Please enter a recipient name.');
         return;
     }
+
     // Prepare the order data
     const orderData = {
         flowerId: parseInt(basket.flowerId),
         recipientName: recipientName,
-        totalCost: basket.price  // Ensure this is a float as your backend expects
+        totalCost: parseFloat(basket.price)  // Ensuring this is a float as expected by the backend
     };
+
     console.log('Order Data:', orderData);
+
     // Proceed with the fetch call
     fetch(`${configuration.host()}/orders`, {
         method: 'POST',
@@ -263,6 +271,7 @@ function placeOrder() {
         alert('Failed to place order: ' + error.message);
     });
 }
+
 
 
 
