@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flower Shop</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header>
@@ -24,38 +25,35 @@
     <section>
         <h2>Filters</h2>
         <label for="flowerType">Flower Type:</label>
-        <select id="flowerType">
-            <option value="">All</option>
-            <option value="mixed">Mixed</option>
-            <option value="roses">Roses</option>
-            <option value="tulips">Valencia</option>
-            <option value="daisies">Daisies</option>
-        </select>
+<select id="flowerType">
+    <option value="rose">Rose</option>
+    <option value="tulip">Tulip</option>
+    <!-- Add more options as needed -->
+</select>
 
-        <label for="occasion">Occasion:</label>
-        <select id="occasion">
-            <option value="">All</option>
-            <option value="mother's day">Mother's Day</option>
-            <option value="birthday">Birthday</option>
-            <option value="thank you">Thank You</option>
-        </select>
+<label for="occasion">Occasion:</label>
+<select id="occasion">
+    <option value="birthday">Birthday</option>
+    <option value="anniversary">Anniversary</option>
+    <!-- Add more options as needed -->
+</select>
 
-        <label for="color">Color:</label>
-        <select id="color">
-            <option value="">All</option>
-            <option value="red">Red</option>
-            <option value="yellow">Yellow</option>
-            <option value="green">Green</option>
-            <option value="orange">Orange</option>
-        </select>
+<label for="color">Color:</label>
+<select id="color">
+    <option value="red">Red</option>
+    <option value="blue">Blue</option>
+    <!-- Add more options as needed -->
+</select>
 
-        <label for="sort">Sort By:</label>
-        <select id="sort">
-            <option value="priceLowHigh">Price: Low to High</option>
-            <option value="priceHighLow">Price: High to Low</option>
-        </select>
+<label for="sort">Sort By:</label>
+<select id="sort">
+    <option value="price">Price</option>
+    <option value="name">Name</option>
+    <!-- Add more options as needed -->
+</select>
 
-        <button onclick="applyFilters()">Apply Filters</button>
+<button onclick="applyFilters()">Apply Filters</button>
+
     </section>
 
     <section id="flowerList">

@@ -1,11 +1,10 @@
-<!-- Checkout Page Updated HTML -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header>
@@ -28,31 +27,62 @@
     <script src="configuration.js"></script>
     <script src="main.js"></script>
     <script>
-                document.addEventListener('DOMContentLoaded', function() {
-            const basket = JSON.parse(localStorage.getItem('basket'));
-            if (basket) {
-                document.getElementById('orderDetails').innerHTML = `
-                    <img src="${configuration.host()}/flowers/${basket.flowerId}/image" alt="Flower Image" style="width:200px; height:200px;">
-                    <p>Flower Name: ${basket.flowerName}</p>
-                    <p>Type: ${basket.flowerType}</p>
-                    <p>Color: ${basket.flowerColor}</p>
-                    <p>Recipient Name: ${basket.recipientName}</p>
-                    <p>Delivery Date: ${basket.deliveryDate}</p>
-                `;
-
-                // Check if logged in for a discount
-                if (configuration.isLoggedIn()) {
-                    document.getElementById('orderDetails').innerHTML += `<p>Discount Applied: -$10</p>`;
-                }
-            } else {
-                console.log('No basket item found');
-                window.location.href = 'index.html'; // Redirect if basket is empty
-            }
+        document.addEventListener('DOMContentLoaded', function() {
+            updateOrderSummary();
         });
+        
+        function updateOrderSummary() {
+    const basket = JSON.parse(localStorage.getItem('basket') || '{}');
+    if (!basket || Object.keys(basket).length === 0) {
+        console.error("No items in the basket, redirecting...");
+        window.location.href = 'index.html';
+        return;
+    }
 
-        </script>
-        
-        
-        
+    const price = configuration.isLoggedIn() ? 40 : 50;
+    const discount = configuration.isLoggedIn() ? 10 : 0;
+    const totalPrice = price + (basket.deliveryFee || 25); // assuming a delivery fee of $25
+
+    const orderDetailsHTML = `
+        <img id="flowerImage" src="" alt="Flower Image" style="width:200px; height:200px;"> <!-- Image element added -->
+        <p>Flower Name: ${basket.flowerName}</p>
+        <p>Type: ${basket.flowerType}</p>
+        <p>Color: ${basket.flowerColor}</p>
+        <p>Recipient Name: ${basket.recipientName}</p>
+        <p>Delivery Date: ${basket.deliveryDate}</p>
+        <p>Price: $${price}</p>
+        ${discount ? `<p>Discount Applied: -$${discount}</p>` : ''}
+        <p>Total Cost: $${totalPrice}</p>
+    `;
+
+    document.getElementById('orderDetails').innerHTML = orderDetailsHTML;
+
+    // Fetch the flower image with proper authorization
+    const imgElement = document.getElementById('flowerImage');
+    const imageUrl = `${configuration.host()}/flowers/${basket.flowerId}/image`;
+    fetch(imageUrl, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${configuration.token()}`, // Ensure the token is fetched correctly
+            'Accept': 'image/jpeg'
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.blob();
+        } else {
+            throw new Error(`Failed to load image with status: ${response.status}`);
+        }
+    })
+    .then(blob => {
+        imgElement.src = URL.createObjectURL(blob);
+    })
+    .catch(error => {
+        console.error(`Error loading image:`, error);
+        imgElement.alt = 'Failed to load image';
+    });
+}
+
+    </script>
 </body>
 </html>

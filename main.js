@@ -8,15 +8,17 @@ document.addEventListener('DOMContentLoaded', function() {
     basket = basket ? JSON.parse(basket) : {};
     console.log("Parsed basket content:", basket);
 
-    if (!basket || !basket.flowerId || typeof basket.price === 'undefined') {
+    if (!validateBasket(basket)) {
         console.error('No items in the basket or basket data is incomplete');
-    } else {}
+    } else {
+        console.log("Basket is valid:", basket);
+    }
     const flowerId = new URLSearchParams(window.location.search).get('id');
     if (flowerId) {
         console.log("Flower ID present: ", flowerId);
         loadFlowerDetails(flowerId);
     } else {
-        console.log("Loading all flowers because no specific flower ID was found");
+        console.log("No specific flower ID found, loading all flowers");
         loadFlowers();
     }
     if (window.location.pathname.includes('checkout.html')) {
@@ -24,6 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
         loadOrderSummary();
     }
 });
+
 
 async function loadFlowers() {
     const flowerType = document.getElementById('flowerType').value;
@@ -50,15 +53,17 @@ async function loadFlowers() {
 
 function displayFlowers(flowers) {
     const flowerList = document.getElementById('flowerList');
-    flowerList.innerHTML = '';
+    flowerList.innerHTML = ''; // Clear existing entries
 
     flowers.forEach(flower => {
+        // Set default price if not provided
+        const price = flower.price ? `$${flower.price}` : '';
         const flowerDiv = document.createElement('div');
         flowerDiv.innerHTML = `
             <h3>${flower.name}</h3>
             <img id="img-${flower.id}" alt="Image of ${flower.name}" style="width:100px; height:100px;">
             <p>Type: ${flower.type}</p>
-            <p>Price: $${flower.price || 'N/A'}</p>
+            <p>Price: ${price}</p>
             <button onclick="window.location.href='add-to-basket.html?id=${flower.id}'">Add to Basket</button>
         `;
         flowerList.appendChild(flowerDiv);
@@ -103,9 +108,14 @@ function loadImage(flowerId) {
 function updateBasketCount() {
     const basketCountElement = document.getElementById('basketCount');
     if (!basketCountElement) return; // Exit if no element found
-    const basket = JSON.parse(localStorage.getItem('basket') || '{}');
-    const count = Object.keys(basket).length; // Simplified to count keys in the object
-    basketCountElement.innerText = count;
+
+    const basket = localStorage.getItem('basket');
+    // Check if basket exists and is not just an empty object
+    if (basket && basket !== '{}') {
+        basketCountElement.innerText = 1; // There is one item in the basket
+    } else {
+        basketCountElement.innerText = 0; // No items in the basket
+    }
 }
 
 function applyFilters() {
@@ -114,11 +124,13 @@ function applyFilters() {
 
 function addToBasket() {
     const flowerId = new URLSearchParams(window.location.search).get('id');
-    const deliveryDate = document.getElementById('deliveryDate').value; // Assuming delivery date is needed somewhere, though not saved in the order directly
-    const flowerName = document.getElementById('flowerName').innerText; // Assuming there's an element displaying the flower's name
-    const price = parseFloat(document.getElementById('flowerPrice').innerText.replace('$', '')); // Assuming there's an element with the flower's price
+    const deliveryDate = document.getElementById('deliveryDate').value;
+    const flowerName = document.getElementById('flowerName').innerText;
+    const price = parseFloat(document.getElementById('flowerPrice').innerText.replace('$', ''));
+    console.log("Attempting to add to basket:", flowerId, flowerName, price, deliveryDate);
 
     if (!deliveryDate) {
+        console.error('Delivery date is missing');
         alert('Please select a delivery date.');
         return;
     }
@@ -127,21 +139,32 @@ function addToBasket() {
         flowerId,
         flowerName,
         price,
-        recipientName: "", // This could be input by the user on the checkout page
+        recipientName: "", // Placeholder for now
         deliveryDate
     };
 
+    console.log("Basket item to be added:", basketItem);
     localStorage.setItem('basket', JSON.stringify(basketItem));
+    console.log("Basket updated in localStorage:", localStorage.getItem('basket'));
     alert('Added to basket successfully!');
+    updateBasketCount(); // Update the basket count immediately after adding
     window.location.href = 'checkout.html'; // Redirect to the checkout page
 }
 
 async function checkout() {
     const basket = JSON.parse(localStorage.getItem('basket') || '{}');
-    if (!basket) {
-        alert('No items in the basket');
+    console.log("Basket contents before checkout:", basket);
+
+    if (!validateBasket(basket)) {
+        alert('Basket is incomplete, cannot proceed with the order.');
         return;
     }
+
+    const orderData = {
+        flowerId: basket.flowerId,
+        recipientName: basket.recipientName, // Use recipientName directly from the basket
+        totalCost: basket.price // Assume the price is already calculated correctly
+    };
 
     try {
         const response = await fetch(`${configuration.host()}/orders`, {
@@ -150,19 +173,27 @@ async function checkout() {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${configuration.token()}`
             },
-            body: JSON.stringify({
-                flowerId: basket.flowerId
-                // Ensure you have the customerId or other required fields if needed
-            })
+            body: JSON.stringify(orderData)
         });
 
-        if (!response.ok) throw new Error('Failed to place order');
+        if (!response.ok) {
+            throw new Error('Failed to place order: ' + response.statusText);
+        }
+
+        console.log('Order placed successfully');
         alert('Order placed successfully');
-        localStorage.removeItem('basket');
-        updateBasketCount();
+        localStorage.removeItem('basket'); // Clear the basket
+        updateBasketCount(); // Update count after clearing the basket
+        window.location.href = 'track-order.html';
     } catch (error) {
         console.error('Failed to place order:', error);
+        alert('Failed to place order: ' + error.message);
     }
+}
+
+function clearBasket() {
+    localStorage.removeItem('basket'); // This ensures the basket is completely removed.
+    updateBasketCount(); // Update the count immediately.
 }
 
 function loadFlowerDetails(flowerId) {
@@ -212,42 +243,43 @@ function loadOrderSummary() {
         <p>Total: $${basket.isLoggedIn ? basket.price + 25 - 10 : basket.price + 25}</p>
     `;
 }
+function validateBasket(basket) {
+    if (!basket) {
+        console.error('Basket is null:', basket);
+        return false;
+    }
+    if (!basket.flowerId || basket.flowerId === "") {
+        console.error('Basket is missing flowerId:', basket);
+        return false;
+    }
+    if (typeof basket.price === 'undefined') {
+        console.error('Basket is missing price:', basket);
+        return false;
+    }
+    if (!basket.recipientName || basket.recipientName === "") {
+        console.error('Basket is missing recipientName:', basket);
+        return false;
+    }
+    console.log("Basket is valid:", basket);
+    return true;
+}
+
 
 function placeOrder() {
     const basket = JSON.parse(localStorage.getItem('basket') || '{}');
-    console.log('Basket Content:', basket);
+    console.log("Basket contents:", basket);
 
-    // Checking if the basket is empty or required properties are missing
-    if (!basket || !basket.flowerId || !basket.price) {
-        console.error('No items in the basket or basket data is incomplete');
-        alert('No items in the basket or basket data is incomplete');
-        return;
-    }
+    // Assuming a default price if not provided
+    const totalCost = basket.price || 50;
 
-    // Validate the recipient name element is present and has a value
-    const recipientNameElement = document.getElementById('recipientName');
-    if (!recipientNameElement) {
-        console.error('Recipient name input element not found');
-        alert('Recipient name input element not found');
-        return;
-    }
-
-    const recipientName = recipientNameElement.value;
-    if (!recipientName) {
-        alert('Please enter a recipient name.');
-        return;
-    }
-
-    // Prepare the order data
     const orderData = {
-        flowerId: parseInt(basket.flowerId),
-        recipientName: recipientName,
-        totalCost: parseFloat(basket.price)  // Ensuring this is a float as expected by the backend
+        flowerId: basket.flowerId,
+        recipientName: basket.recipientName,
+        totalCost: totalCost
     };
 
-    console.log('Order Data:', orderData);
+    console.log("Order data to be sent:", orderData);
 
-    // Proceed with the fetch call
     fetch(`${configuration.host()}/orders`, {
         method: 'POST',
         headers: {
@@ -271,6 +303,10 @@ function placeOrder() {
         alert('Failed to place order: ' + error.message);
     });
 }
+
+
+
+
 
 
 
