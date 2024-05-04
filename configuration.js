@@ -105,4 +105,17 @@ async function signup() {
         } else {
             console.log(`response status:${response.status}`);            
             alert("Something went wrong!");
-      
+        }
+      }
+      catch(error) {
+        console.log(error);        
+        alert("Something went wrong!");
+      }    
+}
+
+async function logout(){
+    removeTheToken();
+}
+
+
+

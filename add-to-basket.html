@@ -26,4 +26,62 @@
         <button onclick="addToBasket()">Add to Basket</button>
     </main>
 
-    <script src="configuration.j
+    <script src="configuration.js"></script>
+    <script src="main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const flower = JSON.parse(localStorage.getItem('selectedFlower'));
+            if (flower) {
+                document.getElementById('flowerName').textContent = flower.name;
+                document.getElementById('flowerType').textContent = flower.type;
+                document.getElementById('flowerColor').textContent = flower.color;
+                // Update to fetch the image with proper authorization
+                const imgElement = document.getElementById('flowerImage');
+                const imageUrl = `${configuration.host()}/flowers/${flower.id}/image`;
+                fetch(imageUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${configuration.token()}`, // Ensure the token is fetched correctly
+                        'Accept': 'image/jpeg'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.blob();
+                    } else {
+                        throw new Error(`Failed to load image with status: ${response.status}`);
+                    }
+                })
+                .then(blob => {
+                    imgElement.src = URL.createObjectURL(blob);
+                })
+                .catch(error => {
+                    console.error(`Error loading image:`, error);
+                    imgElement.alt = 'Failed to load image';
+                });
+            }
+        });
+    
+        function addToBasket() {
+            const basketItem = {
+                flowerId: new URLSearchParams(window.location.search).get('id'),
+                deliveryDate: document.getElementById('deliveryDate').value,
+                recipientName: document.getElementById('recipientName').value,
+                flowerName: document.getElementById('flowerName').textContent,
+                flowerType: document.getElementById('flowerType').textContent,
+                flowerColor: document.getElementById('flowerColor').textContent,
+                imageUrl: document.getElementById('flowerImage').src  // Store image URL in basket
+            };
+    
+            if (!basketItem.deliveryDate || !basketItem.recipientName) {
+                alert('Please fill in all required fields.');
+                return;
+            }
+    
+            localStorage.setItem('basket', JSON.stringify(basketItem));
+            window.location.href = 'checkout.html'; // Redirect to the checkout page
+        }
+    </script>
+    
+</body>
+</html>

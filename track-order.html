@@ -22,4 +22,32 @@
     <script src="configuration.js"></script>
     <script src="main.js"></script>
     <script>
-   
+        document.addEventListener('DOMContentLoaded', function() {
+            loadOrders();
+        });
+        
+        function loadOrders() {
+            fetch(`${configuration.host()}/orders`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${configuration.token()}`
+                }
+            }).then(response => response.json())
+            .then(orders => {
+                const ordersList = document.getElementById('ordersList');
+                ordersList.innerHTML = orders.map(order => `
+                    <div>
+                        <h3>Order ID: ${order.id}</h3>
+                        <p>Flower ID: ${order.flowerId}</p>
+                        <p>Recipient: ${order.recipientName}</p>
+                        <p>Total Cost: $${order.totalCost.toFixed(2)}</p>
+                    </div>
+                `).join('');
+            }).catch(error => {
+                console.error('Failed to load orders:', error);
+            });
+        }
+        </script>
+        
+</body>
+</html>
